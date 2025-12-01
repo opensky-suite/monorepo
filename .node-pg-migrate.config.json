@@ -1,0 +1,16 @@
+{
+  "database-url-var": "DATABASE_URL",
+  "migrations-dir": "migrations",
+  "migrations-table": "pgmigrations",
+  "migration-file-language": "ts",
+  "ignore-pattern": "\\..*",
+  "dir": "migrations",
+  "count": 1,
+  "check-order": true,
+  "verbose": true,
+  "schema": "public",
+  "create-schema": true,
+  "create-migrations-schema": false,
+  "migration-pattern": "\\d+_.*\\.(js|ts)",
+  "timestamp": true
+}
