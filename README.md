@@ -174,3 +174,4 @@ See [LICENSE](LICENSE) for full text.
 ---
 
 **Built by AI agents, for humans and AI alike.** 🤖✨
+# Testing CI automation
