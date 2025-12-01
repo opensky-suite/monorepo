@@ -376,4 +376,97 @@ export class PeerConnectionManager extends EventEmitter<PeerConnectionEvents> {
   hasPeer(peerId: string): boolean {
     return this.peers.has(peerId);
   }
+
+  /**
+   * Replace track in peer connection (e.g., switch from camera to screen share)
+   */
+  async replaceTrack(
+    peerId: string,
+    oldTrack: MediaStreamTrack,
+    newTrack: MediaStreamTrack,
+  ): Promise<void> {
+    const peerInfo = this.peers.get(peerId);
+    if (!peerInfo) {
+      throw new PeerConnectionError(
+        `Peer ${peerId} not found`,
+        "PEER_NOT_FOUND",
+      );
+    }
+
+    const senders = peerInfo.connection.getSenders();
+    const sender = senders.find((s) => s.track === oldTrack);
+
+    if (!sender) {
+      throw new PeerConnectionError(
+        `Track not found in peer ${peerId}`,
+        "TRACK_NOT_FOUND",
+      );
+    }
+
+    try {
+      await sender.replaceTrack(newTrack);
+    } catch (error) {
+      throw new PeerConnectionError(
+        `Failed to replace track for peer ${peerId}: ${error}`,
+        "REPLACE_TRACK_FAILED",
+        error,
+      );
+    }
+  }
+
+  /**
+   * Replace video track for all peers (useful for screen sharing)
+   */
+  async replaceVideoTrackForAll(newTrack: MediaStreamTrack): Promise<void> {
+    const promises = Array.from(this.peers.entries()).map(
+      async ([peerId, peerInfo]) => {
+        const senders = peerInfo.connection.getSenders();
+        const videoSender = senders.find((s) => s.track?.kind === "video");
+
+        if (videoSender && videoSender.track) {
+          try {
+            await videoSender.replaceTrack(newTrack);
+          } catch (error) {
+            throw new PeerConnectionError(
+              `Failed to replace video track for peer ${peerId}: ${error}`,
+              "REPLACE_TRACK_FAILED",
+              error,
+            );
+          }
+        }
+      },
+    );
+
+    await Promise.all(promises);
+  }
+
+  /**
+   * Get senders for a peer connection
+   */
+  getSenders(peerId: string): RTCRtpSender[] {
+    const peerInfo = this.peers.get(peerId);
+    if (!peerInfo) {
+      throw new PeerConnectionError(
+        `Peer ${peerId} not found`,
+        "PEER_NOT_FOUND",
+      );
+    }
+
+    return peerInfo.connection.getSenders();
+  }
+
+  /**
+   * Get receivers for a peer connection
+   */
+  getReceivers(peerId: string): RTCRtpReceiver[] {
+    const peerInfo = this.peers.get(peerId);
+    if (!peerInfo) {
+      throw new PeerConnectionError(
+        `Peer ${peerId} not found`,
+        "PEER_NOT_FOUND",
+      );
+    }
+
+    return peerInfo.connection.getReceivers();
+  }
 }
