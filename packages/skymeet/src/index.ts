@@ -10,3 +10,4 @@ export * from "./media-stream-manager.js";
 export * from "./peer-connection-manager.js";
 export * from "./screen-share-manager.js";
 export * from "./recording-manager.js";
+export * from "./virtual-background-processor.js";
