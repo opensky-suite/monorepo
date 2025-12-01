@@ -18,10 +18,11 @@
   "author": "OpenSky Suite",
   "license": "MIT",
   "dependencies": {
-    "nodemailer": "^6.9.8",
+    "@elastic/elasticsearch": "^8.19.1",
+    "imap": "^0.8.19",
     "mailparser": "^3.6.9",
-    "smtp-server": "^3.13.4",
-    "imap": "^0.8.19"
+    "nodemailer": "^6.9.8",
+    "smtp-server": "^3.13.4"
   },
   "devDependencies": {
     "@types/node": "^20.10.6",
