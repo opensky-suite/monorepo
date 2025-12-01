@@ -1,0 +1,36 @@
+{
+  "name": "@opensky/skymeet",
+  "version": "0.1.0",
+  "description": "SkyMeet - WebRTC video conferencing for OpenSky Suite",
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "scripts": {
+    "build": "tsc",
+    "test": "vitest",
+    "test:coverage": "vitest --coverage"
+  },
+  "keywords": [
+    "webrtc",
+    "video",
+    "audio",
+    "conferencing",
+    "skymeet"
+  ],
+  "author": "OpenSky Suite",
+  "license": "AGPL-3.0",
+  "devDependencies": {
+    "@types/node": "^24.10.1",
+    "typescript": "^5.9.3",
+    "vitest": "^4.0.14"
+  },
+  "dependencies": {
+    "eventemitter3": "^5.0.1"
+  }
+}
