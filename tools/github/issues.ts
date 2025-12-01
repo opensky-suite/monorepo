@@ -204,48 +204,63 @@ async function createIssues() {
 function generateIssues(start: number, count: number): Array<{ title: string; body: string; labels: string[] }> {
   const issues: Array<{ title: string; body: string; labels: string[] }> = [];
   
-  // Issue templates grouped by product (simplified from original mega-script)
+  // Issue templates - will generate exactly the count requested
   const products = [
-    { name: 'SkyDocs', agent: 'agent:skydocs', count: 70, features: ['Database schema', 'Rich text editor (Slate.js)', 'Real-time collaboration (Y.js CRDT)', 'Performance optimization for large documents', 'Document versioning and history', 'Comments and suggestions mode', 'Export (PDF, Word, Markdown, HTML)', 'Import (Word, PDF, Markdown)', 'Document templates', 'Permissions and sharing'] },
-    { name: 'SkySheets', agent: 'agent:skysheets', count: 70, features: ['Database schema', 'Spreadsheet engine core', 'Formula parser and evaluator', 'Excel formula compatibility', 'Cell formatting', 'Charts and visualizations', 'Pivot tables', 'Large dataset optimization (100K+ rows)', 'Real-time collaboration', 'Import/Export Excel'] },
-    { name: 'SkySlides', agent: 'agent:skyslides', count: 60, features: ['Database schema', 'Slide editor core', 'Templates and themes (Canva-inspired)', 'Animations and transitions', 'Presenter mode with notes', 'Export to PDF/PowerPoint', 'Import PowerPoint', 'Real-time collaboration', 'Stock images integration', 'Accessibility checker'] },
-    { name: 'SkyMeet', agent: 'agent:skymeet', count: 60, features: ['WebRTC video/audio core', 'TURN server setup', 'Screen sharing', 'Meeting scheduling', 'Virtual backgrounds', 'Recording to SkyDrive', 'Live transcription (SkyMind)', 'Breakout rooms', 'Whiteboard', 'Mobile app'] },
-    { name: 'SkyChat', agent: 'agent:skychat', count: 70, features: ['Real-time messaging', 'Channels and DMs', 'Threaded conversations', 'Message search', 'File sharing', 'Mentions and notifications', 'Reactions and emoji', 'Slash commands', 'Webhooks and bots', 'Mobile app'] },
-    { name: 'SkyForms', agent: 'agent:skyforms', count: 50, features: ['Form builder', 'Question types', 'Validation rules', 'Conditional logic', 'Response collection', 'Integration with SkySheets', 'Email notifications', 'Quiz mode', 'File uploads', 'Templates'] },
-    { name: 'SkySheet', agent: 'agent:skysheet', count: 60, features: ['Visual app builder', 'Data source connectors', 'Workflow automation', 'User authentication', 'Role-based access', 'Mobile app generation', 'Deployment', 'UI component library', 'Templates', 'API integrations'] },
-    { name: 'SkySearch', agent: 'agent:skysearch', count: 50, features: ['Web crawler', 'PageRank implementation', 'BigTable-inspired storage', 'Inverted index', 'Query parser', 'Relevance ranking', 'Search suggestions', 'Image indexing', 'Safe search', 'Analytics'] },
-    { name: 'SkyMind', agent: 'agent:skymind', count: 60, features: ['LLM API abstraction', 'Model routing (Claude, OpenAI, Gemini)', 'Fallback strategies', 'Context management', 'Prompt templates', 'Response caching', 'Cost tracking', 'Embedding generation', 'Vector database', 'RAG implementation'] },
-    { name: 'Mobile', agent: 'agent:mobile', count: 60, features: ['React Native setup', 'iOS app', 'Android app', 'Code sharing with web', 'Authentication flows', 'Push notifications', 'Offline support', 'Native modules', 'App store deployment', 'Mobile testing'] },
-    { name: 'Frontend', agent: 'agent:devops', count: 40, features: ['React architecture', 'Component library', 'Design system', 'Theme support', 'State management', 'Routing', 'Form handling', 'Accessibility', 'i18n', 'Bundle optimization'] },
-    { name: 'Testing', agent: 'agent:testing', count: 40, features: ['Vitest configuration', 'Test examples', 'Mocking strategies', 'Coverage reporting', 'Visual regression', 'Performance testing', 'Load testing', 'Security testing', 'Accessibility testing', 'Mobile testing'] },
-    { name: 'Security', agent: 'agent:security', count: 40, features: ['Security audit framework', 'Penetration testing', 'OWASP Top 10', 'Secrets scanning', 'Dependency scanning', 'SQL injection prevention', 'XSS prevention', 'CSRF protection', 'Rate limiting', 'DDoS protection'] },
-    { name: 'Performance', agent: 'agent:performance', count: 20, features: ['Benchmarking', 'Database optimization', 'API optimization', 'Bundle optimization', 'CDN setup', 'Caching strategy', 'Image optimization', 'Lazy loading', 'SSR', 'PWA'] },
+    { name: 'SkyMeet', agent: 'agent:skymeet', count: 60, features: ['WebRTC video/audio core', 'TURN server setup', 'Screen sharing', 'Meeting scheduling', 'Virtual backgrounds', 'Recording', 'Live transcription', 'Breakout rooms', 'Whiteboard', 'Mobile app'] },
+    { name: 'SkyChat', agent: 'agent:skychat', count: 70, features: ['Real-time messaging', 'Channels and DMs', 'Threaded conversations', 'Message search', 'File sharing', 'Mentions', 'Reactions', 'Slash commands', 'Webhooks', 'Bots'] },
+    { name: 'SkyForms', agent: 'agent:skyforms', count: 50, features: ['Form builder', 'Question types', 'Validation', 'Conditional logic', 'Response collection', 'SkySheets integration', 'Notifications', 'Quiz mode', 'File uploads', 'Templates'] },
+    { name: 'SkySheet', agent: 'agent:skysheet', count: 60, features: ['App builder', 'Data connectors', 'Workflow automation', 'Authentication', 'Access control', 'Mobile generation', 'Deployment', 'Components', 'Templates', 'APIs'] },
+    { name: 'SkySearch', agent: 'agent:skysearch', count: 50, features: ['Web crawler', 'PageRank', 'Storage', 'Index', 'Query parser', 'Ranking', 'Suggestions', 'Image search', 'Safe search', 'Analytics'] },
+    { name: 'SkyMind', agent: 'agent:skymind', count: 60, features: ['API abstraction', 'Model routing', 'Fallback', 'Context management', 'Prompts', 'Caching', 'Cost tracking', 'Embeddings', 'Vector DB', 'RAG'] },
+    { name: 'Mobile', agent: 'agent:mobile', count: 60, features: ['RN setup', 'iOS', 'Android', 'Code sharing', 'Auth', 'Push', 'Offline', 'Native modules', 'Deployment', 'Testing'] },
+    { name: 'Frontend', agent: 'agent:devops', count: 40, features: ['React', 'Components', 'Design system', 'Theming', 'State', 'Routing', 'Forms', 'a11y', 'i18n', 'Optimization'] },
+    { name: 'Testing', agent: 'agent:testing', count: 38, features: ['Vitest', 'Examples', 'Mocks', 'Coverage', 'Visual', 'Performance', 'Load', 'Security'] },
+    { name: 'Security', agent: 'agent:security', count: 39, features: ['Audits', 'Pentest', 'OWASP', 'Secrets', 'Dependencies', 'SQL injection', 'XSS', 'CSRF'] },
+    { name: 'Performance', agent: 'agent:performance', count: 23, features: ['Benchmarks', 'DB', 'API', 'Bundle', 'CDN', 'Cache', 'Images', 'Lazy'] },
   ];
   
   const priorities = ['critical', 'high', 'medium', 'low'];
   
-  let issueNum = 0;
+  let generated = 0;
   for (const product of products) {
-    const featuresPerIssue = Math.ceil(product.count / product.features.length);
+    const issuesPerFeature = Math.ceil(product.count / product.features.length);
     
-    product.features.forEach((feature, idx) => {
-      for (let i = 0; i < featuresPerIssue && issueNum < count; i++) {
-        issueNum++;
-        if (issueNum < start - 240) continue; // Skip if before our start point
-        if (issueNum > start - 240 + count) break;
+    for (let featureIdx = 0; featureIdx < product.features.length; featureIdx++) {
+      const feature = product.features[featureIdx];
+      const priority = priorities[Math.min(featureIdx < 3 ? 0 : featureIdx < 6 ? 1 : featureIdx < 8 ? 2 : 3, priorities.length - 1)];
+      
+      for (let i = 0; i < issuesPerFeature; i++) {
+        if (generated >= count) break;
         
-        const priority = priorities[Math.min(Math.floor(idx / 3), priorities.length - 1)];
+        generated++;
+        const title = `${product.name}: ${feature}${i > 0 ? ` #${i + 1}` : ''}`;
         
         issues.push({
-          title: `${product.name}: ${feature}${i > 0 ? ` (${i + 1})` : ''}`,
+          title,
           body: `## Description\nImplement ${feature.toLowerCase()} for ${product.name}.\n\n## Acceptance Criteria\n- Feature implemented\n- Tests written (90%+ coverage with Vitest)\n- Documentation complete\n- Performance optimized\n- Screenshots verified`,
           labels: [product.agent, `priority:${priority}`, 'type:feature'],
         });
       }
+      
+      if (generated >= count) break;
+    }
+    
+    if (generated >= count) break;
+  }
+  
+  // Pad with additional generic issues if needed
+  while (issues.length < count) {
+    const productIdx = issues.length % products.length;
+    const product = products[productIdx];
+    
+    issues.push({
+      title: `${product.name}: Enhancement #${issues.length + 1}`,
+      body: `## Description\nAdditional enhancement for ${product.name}.\n\n## Acceptance Criteria\n- Feature implemented\n- Tests written (90%+ coverage with Vitest)\n- Documentation complete`,
+      labels: [product.agent, 'priority:low', 'type:feature'],
     });
   }
   
-  return issues.slice(0, count);
+  return issues;
 }
 
 // Main command router
