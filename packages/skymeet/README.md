@@ -60,6 +60,8 @@ await peerManager.addIceCandidate("peer-id", candidate);
 
 ### Screen Sharing
 
+#### Simple Approach (Manual Track Replacement)
+
 ```typescript
 // Start screen sharing
 const screenStream = await mediaManager.getDisplayMedia({
@@ -78,6 +80,44 @@ if (videoSender) {
 
 // Stop screen sharing
 mediaManager.stopScreenShare();
+```
+
+#### Advanced Approach (ScreenShareManager - Recommended)
+
+```typescript
+import { ScreenShareManager } from "@opensky/skymeet";
+
+// Create screen share manager
+const screenShareManager = new ScreenShareManager(mediaManager, peerManager);
+
+// Start screen sharing (automatically replaces tracks in all peer connections)
+await screenShareManager.startScreenShare();
+
+// Stop screen sharing (automatically restores original video)
+await screenShareManager.stopScreenShare();
+
+// Toggle screen sharing
+const isSharing = await screenShareManager.toggleScreenShare();
+
+// Check state
+console.log("Is sharing:", screenShareManager.isScreenSharing());
+console.log("Screen stream:", screenShareManager.getScreenStream());
+```
+
+#### Replace Video Track in All Peers
+
+```typescript
+// Get screen share stream
+const screenStream = await mediaManager.getDisplayMedia();
+const screenTrack = screenStream.getVideoTracks()[0];
+
+// Replace video track in all active peer connections
+await peerManager.replaceVideoTrackForAll(screenTrack);
+
+// Later, restore camera
+const cameraStream = mediaManager.getLocalStream();
+const cameraTrack = cameraStream.getVideoTracks()[0];
+await peerManager.replaceVideoTrackForAll(cameraTrack);
 ```
 
 ### Audio/Video Controls
@@ -224,6 +264,10 @@ new PeerConnectionManager(config: PeerConnectionConfig)
 - `addIceCandidate(peerId, candidate)` - Add ICE candidate
 - `sendData(peerId, data)` - Send data via data channel
 - `getStats(peerId)` - Get connection statistics
+- `replaceTrack(peerId, oldTrack, newTrack)` - Replace track in peer connection
+- `replaceVideoTrackForAll(newTrack)` - Replace video track in all connections
+- `getSenders(peerId)` - Get RTP senders
+- `getReceivers(peerId)` - Get RTP receivers
 - `closePeerConnection(peerId)` - Close specific connection
 - `closeAll()` - Close all connections
 - `getPeerConnection(peerId)` - Get RTCPeerConnection instance
@@ -239,6 +283,25 @@ new PeerConnectionManager(config: PeerConnectionConfig)
 - `data-channel-message` - Data received
 - `data-channel-open` - Data channel opened
 - `data-channel-close` - Data channel closed
+
+### ScreenShareManager
+
+High-level screen sharing coordinator that simplifies screen sharing across all peer connections.
+
+#### Constructor
+
+```typescript
+new ScreenShareManager(mediaManager: MediaStreamManager, peerManager: PeerConnectionManager)
+```
+
+#### Methods
+
+- `startScreenShare(options?)` - Start screen sharing and replace tracks in all peers
+- `stopScreenShare()` - Stop screen sharing and restore original tracks
+- `toggleScreenShare(options?)` - Toggle screen sharing on/off
+- `isScreenSharing()` - Check if currently screen sharing
+- `getScreenStream()` - Get current screen share stream
+- `getState()` - Get complete screen share state
 
 ## Error Handling
 
