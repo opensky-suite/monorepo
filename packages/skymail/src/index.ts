@@ -14,6 +14,7 @@
 export * from "./types";
 export * from "./smtp-server";
 export * from "./smtp-client";
+export * from "./email-threading";
 
 // Re-export commonly used types
 export type {
