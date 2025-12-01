@@ -302,34 +302,82 @@ Blockers: None
 
 ### Pull Request Process
 
-**You are your own reviewer!** No need to wait for others.
+**REQUIRED**: All work MUST go through feature branches and pull requests. Main branch is protected.
 
 1. **Create Feature Branch**: `git checkout -b feature/issue-N-description`
+   - Use descriptive names: `feature/issue-5-screenshot-framework`
+   - Include issue number for traceability
+   
 2. **Implement**: Write code + tests (90%+ coverage) + documentation
-3. **Local Testing**: Run `npm test` and `npm run typecheck`
-4. **Commit to Main**: Push directly to main (fast-moving team, small group)
-   - OR create PR if you want CI verification first
-5. **Self-Review**: Review your own code thoroughly
-   - Check test coverage
+   - Write comprehensive tests FIRST or alongside code
+   - Document all public APIs
+   - Update relevant README files
+   
+3. **Local Testing**: Run full test suite before pushing
+   ```bash
+   npm run lint           # ESLint + Prettier
+   npm run typecheck      # TypeScript validation
+   npm test               # Unit tests
+   npm run test:e2e       # E2E tests (if UI changes)
+   npm run test:screenshots  # Screenshot tests (if UI changes)
+   ```
+   
+4. **Commit & Push**: Commit to feature branch and push to remote
+   ```bash
+   git add -A
+   git commit -m "feat(component): description (#issue)"
+   git push -u origin feature/issue-N-description
+   ```
+   
+5. **Create Pull Request**: Use GitHub REST API (or gh CLI for Leader Bot)
+   - Title: `feat(component): description (#issue)`
+   - Body: Summary, details, testing notes, closes issue
+   - Link to issue with "Closes #N"
+   
+6. **CI Checks**: Monitor automated checks (target: <3 minutes)
+   - Lint, typecheck, test, e2e, security, build
+   - All checks MUST pass before merge
+   - Fix any failures immediately
+   
+7. **Self-Review**: Review your own PR thoroughly
+   - Check test coverage (90%+ required)
    - Verify TypeScript types
-   - Run screenshot tests if UI changed
-6. **CI Checks**: Monitor checks (3-minute target)
-7. **Merge**: Merge your own PR when checks pass
-8. **Slack Update**: Post completion to #dev-team
-9. **CI Notification**: Automated post to #ci-status
+   - Review screenshot diffs if UI changed
+   - Ensure no secrets committed
+   
+8. **Merge**: Merge your own PR when ALL checks pass ✅
+   - **Branch protection enforced**: Cannot merge without passing checks
+   - Use "Squash and merge" or "Merge commit" (your choice)
+   - Delete feature branch after merge
+   
+9. **Slack Update**: Post completion to #dev-team
+   - What you accomplished
+   - Issues closed
+   - Commit SHA and PR number
+   
+10. **CI Notification**: Automated post to #ci-status (on main merge)
 
-**Note**: With a small, fast-moving team (3 agents), we push directly to main. 
-No PR approval needed. You are responsible for your code quality.
+**Important Notes**:
+- **Main branch is protected** - Cannot push directly
+- **All checks required** - lint, typecheck, test, e2e, security, build
+- **You are your own reviewer** - Self-review carefully, you own quality
+- **Fast-moving team** - No human approval needed, but CI MUST pass
+- **Delete branches** - Clean up after merge
 
 ### Branch Strategy
 
-- `main` - Production-ready code
-- `develop` - Integration branch for all features
-- `feature/*` - Feature branches (e.g., `feature/skymail-compose`)
-- `fix/*` - Bug fix branches
-- `refactor/*` - Refactoring branches
+- `main` - **PROTECTED** - Production-ready code, requires passing CI checks
+- `feature/*` - Feature branches (e.g., `feature/issue-5-screenshot-framework`)
+- `fix/*` - Bug fix branches (e.g., `fix/issue-42-memory-leak`)
+- `refactor/*` - Refactoring branches (e.g., `refactor/auth-api`)
+- `docs/*` - Documentation branches (e.g., `docs/api-guide`)
 
-**Merge Flow**: `feature/*` → `develop` → `main`
+**Merge Flow**: `feature/*` → PR → CI checks → `main`
+
+**Branch Naming**:
+- Always include issue number: `feature/issue-N-description`
+- Use kebab-case: `feature/issue-5-screenshot-framework`
+- Be descriptive: `feature/issue-42-skymail-threading` not `feature/fix`
 
 ---
 
