@@ -1,0 +1,81 @@
+#!/usr/bin/env sh
+. "$(dirname -- "$0")/_/husky.sh"
+
+# Pre-commit hook - MUST complete in <5 seconds
+# Only checks staged files for speed
+
+echo "🔍 Running pre-commit checks..."
+
+# 1. Lint staged files only (fast)
+echo "  ⚡ Linting staged files..."
+npx lint-staged
+
+# 2. Check for secrets/credentials (fast)
+echo "  🔒 Checking for secrets..."
+if git diff --cached --name-only | grep -E '\.(ts|js|tsx|jsx|json|env)$' > /dev/null; then
+  if git diff --cached | grep -iE '(api[_-]?key|secret|password|token|credential|private[_-]?key).*=.*["\047][a-zA-Z0-9]{20,}' > /dev/null; then
+    echo "  ❌ BLOCKED: Possible secret/credential detected!"
+    echo "     Review changes carefully. Use .secrets.txt for actual secrets."
+    echo "     To bypass (NOT RECOMMENDED): git commit --no-verify"
+    exit 1
+  fi
+fi
+
+# 3. Check for large files (fast)
+echo "  📦 Checking file sizes..."
+git diff --cached --name-only | while read file; do
+  if [ -f "$file" ]; then
+    size=$(wc -c < "$file" 2>/dev/null || echo 0)
+    if [ "$size" -gt 1048576 ]; then  # 1MB
+      echo "  ❌ BLOCKED: File too large: $file ($(echo "scale=2; $size/1048576" | bc)MB)"
+      echo "     Large files should not be committed to git."
+      echo "     Use Git LFS or external storage."
+      exit 1
+    fi
+  fi
+done
+
+# 4. Check for merge conflict markers (fast)
+echo "  🔀 Checking for merge conflicts..."
+if git diff --cached | grep -E '^(<<<<<<<|=======|>>>>>>>)' > /dev/null; then
+  echo "  ❌ BLOCKED: Merge conflict markers detected!"
+  echo "     Resolve conflicts before committing."
+  exit 1
+fi
+
+# 5. Check for debugger statements (fast)
+echo "  🐛 Checking for debugger statements..."
+if git diff --cached --name-only | grep -E '\.(ts|js|tsx|jsx)$' > /dev/null; then
+  if git diff --cached | grep -E '(debugger|console\.(log|debug|info))' > /dev/null; then
+    echo "  ⚠️  WARNING: debugger or console statements detected."
+    echo "     Remove before committing (or use --no-verify to bypass)."
+    # Warning only, don't block
+  fi
+fi
+
+# 6. Validate JSON files (fast)
+echo "  📝 Validating JSON files..."
+git diff --cached --name-only | grep '\.json$' | while read file; do
+  if [ -f "$file" ]; then
+    if ! python3 -m json.tool "$file" > /dev/null 2>&1; then
+      echo "  ❌ BLOCKED: Invalid JSON: $file"
+      exit 1
+    fi
+  fi
+done
+
+# 7. Check TypeScript syntax (only changed files, fast)
+echo "  📘 Quick TypeScript check..."
+git diff --cached --name-only | grep -E '\.(ts|tsx)$' | head -5 | while read file; do
+  if [ -f "$file" ]; then
+    if ! npx tsc --noEmit "$file" 2>&1 | grep -q "error"; then
+      :  # No error
+    else
+      echo "  ❌ BLOCKED: TypeScript error in $file"
+      echo "     Run: npm run typecheck"
+      exit 1
+    fi
+  fi
+done
+
+echo "✅ Pre-commit checks passed!"

@@ -1,0 +1,48 @@
+name: Dependency Review
+
+on:
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+  pull-requests: write
+
+jobs:
+  dependency-review:
+    name: Dependency Review
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Dependency Review
+        uses: actions/dependency-review-action@v4
+        with:
+          fail-on-severity: high
+          comment-summary-in-pr: always
+          deny-licenses: GPL-2.0, GPL-3.0
+          allow-licenses: MIT, Apache-2.0, BSD-3-Clause, ISC, AGPL-3.0
+
+      - name: Notify Slack on Vulnerability
+        if: failure()
+        uses: slackapi/slack-github-action@v1.26.0
+        with:
+          channel-id: 'C0A0TNBHCDQ'
+          payload: |
+            {
+              "text": "🚨 Dependency Vulnerability Detected",
+              "blocks": [
+                {
+                  "type": "section",
+                  "text": {
+                    "type": "mrkdwn",
+                    "text": "*🚨 Dependency Vulnerability Detected*\n\n*PR:* ${{ github.event.pull_request.title }}\n*Author:* ${{ github.event.pull_request.user.login }}\n\nHigh severity vulnerability or incompatible license detected.\n\n<${{ github.event.pull_request.html_url }}|View PR>"
+                  }
+                }
+              ]
+            }
+        env:
+          SLACK_BOT_TOKEN: ${{ secrets.SLACK_BOT_TOKEN }}

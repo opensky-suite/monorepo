@@ -1,0 +1,76 @@
+name: License Compliance
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - 'package.json'
+      - 'package-lock.json'
+      - '**/package.json'
+
+jobs:
+  license-check:
+    name: Check License Compliance
+    runs-on: ubuntu-latest
+    timeout-minutes: 3
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Install license checker
+        run: npm install -g license-checker
+
+      - name: Check licenses
+        run: |
+          license-checker --summary --onlyAllow "MIT;Apache-2.0;BSD-2-Clause;BSD-3-Clause;ISC;0BSD;CC0-1.0;Unlicense;WTFPL;AGPL-3.0" || {
+            echo "❌ Incompatible license detected!"
+            echo ""
+            echo "Allowed licenses: MIT, Apache-2.0, BSD-*, ISC, AGPL-3.0"
+            echo "Our project is AGPL-3.0, but we allow permissive licenses for dependencies."
+            echo ""
+            echo "Run locally: npx license-checker --summary"
+            exit 1
+          }
+
+      - name: Generate license report
+        run: |
+          license-checker --json > license-report.json
+          echo "📄 License Report Generated"
+
+      - name: Upload license report
+        uses: actions/upload-artifact@v4
+        with:
+          name: license-report
+          path: license-report.json
+          retention-days: 90
+
+      - name: Notify Slack on License Issue
+        if: failure()
+        uses: slackapi/slack-github-action@v1.26.0
+        with:
+          channel-id: 'C0A0TNBHCDQ'
+          payload: |
+            {
+              "text": "⚖️ License Compliance Issue",
+              "blocks": [
+                {
+                  "type": "section",
+                  "text": {
+                    "type": "mrkdwn",
+                    "text": "*⚖️ License Compliance Issue Detected*\n\n*PR:* ${{ github.event.pull_request.title }}\n*Author:* ${{ github.event.pull_request.user.login }}\n\nIncompatible license detected in dependencies.\n\n<${{ github.event.pull_request.html_url }}|View PR>"
+                  }
+                }
+              ]
+            }
+        env:
+          SLACK_BOT_TOKEN: ${{ secrets.SLACK_BOT_TOKEN }}
