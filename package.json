@@ -15,7 +15,12 @@
     "build": "echo 'Build not yet configured'",
     "test": "vitest",
     "test:coverage": "vitest --coverage",
-    "test:e2e": "playwright test",
+    "test:e2e": "playwright test tests/*.spec.ts --grep-invert screenshots",
+    "test:screenshots": "SKIP_SERVER=true playwright test tests/screenshots.spec.ts",
+    "screenshots:capture": "tsx tools/screenshots/capture.ts",
+    "screenshots:update": "tsx tools/screenshots/capture.ts --update-baseline",
+    "screenshots:verify": "tsx tools/screenshots/verify.ts verify",
+    "screenshots:compare": "tsx tools/screenshots/verify.ts compare",
     "lint": "eslint .",
     "format": "prettier --write \"**/*.{ts,tsx,js,jsx,json,md}\"",
     "typecheck": "tsc --noEmit",
@@ -54,7 +59,8 @@
     "@types/pg": "^8.15.6",
     "dotenv": "^17.2.3",
     "node-pg-migrate": "^8.0.3",
-    "pg": "^8.16.3"
+    "pg": "^8.16.3",
+    "pngjs": "^7.0.0"
   },
   "engines": {
     "node": ">=22.0.0",

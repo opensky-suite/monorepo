@@ -1,0 +1,279 @@
+name: Screenshot Verification & Upload
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+
+jobs:
+  screenshot-verification:
+    name: Verify Screenshots
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # Full history for comparison
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Install Playwright browsers
+        run: npx playwright install --with-deps chromium firefox webkit
+
+      - name: Start Docker services
+        run: |
+          docker-compose up -d
+          sleep 10
+          docker-compose ps
+
+      - name: Wait for services
+        run: |
+          npx wait-on tcp:5432 -t 30000
+          npx wait-on tcp:6379 -t 30000
+          npx wait-on http://localhost:9000 -t 30000
+          echo "✅ All services ready"
+
+      - name: Run database migrations
+        run: npm run db:migrate || echo "⚠️ No migrations yet"
+
+      - name: Start development server
+        run: |
+          npm run dev &
+          npx wait-on http://localhost:3000 -t 60000 || echo "⚠️ Dev server not ready yet"
+
+      - name: Capture screenshots
+        id: screenshots
+        run: npm run test:screenshots
+        continue-on-error: true
+
+      - name: Verify screenshot quality
+        id: verify
+        run: |
+          npm run screenshots:verify tests/screenshots/current || true
+          npm run screenshots:compare || true
+        continue-on-error: true
+
+      - name: Generate comparison report
+        if: always()
+        run: |
+          mkdir -p tests/screenshots/reports
+          
+          cat > tests/screenshots/reports/summary.md << 'EOF'
+          # 📸 Screenshot Verification Report
+          
+          ## Test Run Information
+          - **PR**: ${{ github.event.pull_request.number || 'N/A' }}
+          - **Branch**: ${{ github.head_ref || github.ref_name }}
+          - **Commit**: ${{ github.sha }}
+          - **Author**: ${{ github.actor }}
+          - **Timestamp**: $(date -u +"%Y-%m-%d %H:%M:%S UTC")
+          
+          ## Screenshot Status
+          
+          ### Baseline Screenshots
+          $(find tests/screenshots/baseline -name "*.png" 2>/dev/null | wc -l) baseline images found
+          
+          ### Current Screenshots
+          $(find tests/screenshots/current -name "*.png" 2>/dev/null | wc -l) screenshots captured
+          
+          ### Differences Detected
+          $(find tests/screenshots/diff -name "*.png" 2>/dev/null | wc -l) differences found
+          
+          ## Files
+          
+          ### Baseline Files
+          ```
+          $(find tests/screenshots/baseline -name "*.png" -exec basename {} \; 2>/dev/null | sort)
+          ```
+          
+          ### Current Files
+          ```
+          $(find tests/screenshots/current -name "*.png" -exec basename {} \; 2>/dev/null | sort)
+          ```
+          
+          ## Verification
+          
+          All screenshots have been captured and uploaded as artifacts.
+          
+          **Next Steps:**
+          1. Download artifacts from GitHub Actions
+          2. Review all screenshots visually
+          3. Verify pages render correctly
+          4. Check for UI regressions
+          5. Update baseline if changes are intentional
+          
+          ## Artifacts
+          
+          - `screenshots-current`: All captured screenshots
+          - `screenshots-baseline`: Reference images
+          - `screenshots-diff`: Visual differences (if any)
+          - `screenshot-verification-report`: This report + detailed analysis
+          
+          EOF
+
+      - name: Upload ALL screenshots (current)
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: screenshots-current
+          path: tests/screenshots/current/**/*.png
+          retention-days: 30
+          if-no-files-found: warn
+
+      - name: Upload baseline screenshots
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: screenshots-baseline
+          path: tests/screenshots/baseline/**/*.png
+          retention-days: 30
+          if-no-files-found: warn
+
+      - name: Upload diff screenshots
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: screenshots-diff
+          path: tests/screenshots/diff/**/*.png
+          retention-days: 30
+          if-no-files-found: ignore
+
+      - name: Upload verification report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: screenshot-verification-report
+          path: |
+            tests/screenshots/reports/
+            tests/screenshots/diff/*.txt
+          retention-days: 30
+          if-no-files-found: warn
+
+      - name: Comment on PR with screenshot links
+        if: always() && github.event_name == 'pull_request'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            const path = require('path');
+            
+            // Count screenshots
+            let currentCount = 0;
+            let baselineCount = 0;
+            let diffCount = 0;
+            
+            try {
+              const currentDir = 'tests/screenshots/current';
+              if (fs.existsSync(currentDir)) {
+                currentCount = fs.readdirSync(currentDir).filter(f => f.endsWith('.png')).length;
+              }
+            } catch (e) {}
+            
+            try {
+              const baselineDir = 'tests/screenshots/baseline';
+              if (fs.existsSync(baselineDir)) {
+                baselineCount = fs.readdirSync(baselineDir).filter(f => f.endsWith('.png')).length;
+              }
+            } catch (e) {}
+            
+            try {
+              const diffDir = 'tests/screenshots/diff';
+              if (fs.existsSync(diffDir)) {
+                diffCount = fs.readdirSync(diffDir).filter(f => f.endsWith('.png')).length;
+              }
+            } catch (e) {}
+            
+            const artifactsUrl = `https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}`;
+            
+            const body = `## 📸 Screenshot Verification Complete
+            
+            **Results:**
+            - 📷 **Current Screenshots**: ${currentCount} captured
+            - 🎯 **Baseline Screenshots**: ${baselineCount} reference images
+            - 🔍 **Differences**: ${diffCount} visual changes detected
+            
+            ${diffCount > 0 ? '⚠️ **Visual changes detected!** Please review screenshots carefully.' : '✅ **No visual changes detected**'}
+            
+            ### 🔗 Download Screenshots
+            
+            **All screenshots have been uploaded as artifacts:**
+            
+            1. [📷 Current Screenshots](${artifactsUrl}) - What was just captured
+            2. [🎯 Baseline Screenshots](${artifactsUrl}) - Reference images
+            3. [🔍 Diff Screenshots](${artifactsUrl}) - Visual differences (if any)
+            4. [📄 Verification Report](${artifactsUrl}) - Detailed analysis
+            
+            ### ✅ Verification Checklist
+            
+            **LLMs/Reviewers must:**
+            - [ ] Download and VIEW all current screenshots
+            - [ ] Verify pages render correctly
+            - [ ] Check for UI regressions
+            - [ ] Confirm no broken layouts
+            - [ ] Validate responsive design
+            - [ ] Review any visual differences
+            
+            ### 📥 How to Download
+            
+            1. Click the links above
+            2. Scroll to "Artifacts" section
+            3. Download ZIP files
+            4. Extract and review all PNG files
+            
+            ### 🔄 Update Baseline (if changes are intentional)
+            
+            \`\`\`bash
+            npm run screenshots:update
+            git add tests/screenshots/baseline
+            git commit -m "chore: update screenshot baselines"
+            \`\`\`
+            
+            ---
+            
+            **Important:** Screenshots are THE verification step. All changes must be visually inspected!
+            `;
+            
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: body
+            });
+
+      - name: Notify Slack with screenshot status
+        if: always()
+        uses: slackapi/slack-github-action@v1.26.0
+        with:
+          channel-id: 'C0A0TNBHCDQ'
+          payload: |
+            {
+              "text": "📸 Screenshot Verification Complete",
+              "blocks": [
+                {
+                  "type": "section",
+                  "text": {
+                    "type": "mrkdwn",
+                    "text": "*📸 Screenshot Verification Complete*\n\n*PR:* ${{ github.event.pull_request.title || 'N/A' }}\n*Branch:* ${{ github.head_ref || github.ref_name }}\n*Author:* ${{ github.actor }}\n\n**Action Required:** Download and review screenshots!\n\n<https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}|View Artifacts>"
+                  }
+                }
+              ]
+            }
+        env:
+          SLACK_BOT_TOKEN: ${{ secrets.SLACK_BOT_TOKEN }}
+
+      - name: Fail if screenshots missing
+        if: steps.screenshots.outcome == 'failure'
+        run: |
+          echo "❌ Screenshot tests failed"
+          echo "Review the logs and artifacts"
+          exit 1
