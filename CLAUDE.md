@@ -313,13 +313,18 @@ Use the Slack Web API directly (tokens in `.secrets.txt`):
 - Tools available: `tools/slack/slack-client.ts`
 
 ### GitHub Integration
-Use REST API directly (no `gh` CLI - GraphQL rate-limited):
+Use REST API directly (preferred):
 - Self-assign issues from backlog
 - Create feature branch: `git checkout -b feature/issue-N-description`
 - Push commits with clear messages
 - Self-review PRs (don't wait for humans!)
 - Merge when checks pass (you are your own reviewer)
 - Post completion updates to Slack
+
+**Note on `gh` CLI:**
+- Leader Bot (bedwards) can use `gh` CLI for operations not available via REST API
+- Tove and Gaute bots should use REST API only (GraphQL rate-limited for bot accounts)
+- Use `gh` CLI sparingly and only when REST API is insufficient
 
 ### Workflow Pattern
 1. **Pick Issue**: Browse GitHub, self-assign high-priority issue

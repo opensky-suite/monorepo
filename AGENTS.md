@@ -279,6 +279,14 @@ Blockers: None
 
 ## GitHub Integration
 
+### GitHub API vs gh CLI
+- **Primary**: Use GitHub REST API directly for all operations
+- **Leader Bot Exception**: bedwards (Leader Bot) can use `gh` CLI for operations not available via REST API
+  - Examples: Complex GraphQL queries, GitHub-specific features
+  - Use sparingly, prefer REST API when possible
+- **Bot Accounts**: Tove and Gaute must use REST API only (GraphQL rate-limited for new bot accounts)
+- **Tooling**: `tools/github/github-api.ts` provides REST API client
+
 ### Issue Management
 
 **Labels by Agent**:
