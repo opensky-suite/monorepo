@@ -275,29 +275,120 @@ Google Workspace's permissions are confusing:
 
 ---
 
-## Communication
+## Communication & Coordination
+
+### Slack Workspace
+**Primary communication channel**: https://opensky-suite.slack.com
+
+**Active Channels:**
+- **#dev-team** - Team coordination (Tove, Gaute, Leader Bot, Brian)
+  - Daily standups (async, every 15-20 minutes)
+  - Feature discussion and coordination
+  - Blockers and questions
+  - Progress updates
+  
+- **#ci-status** - GitHub Actions notifications (major events only)
+  - Build successes/failures
+  - Deployment notifications
+  - Major milestones
+  - Keep it low-noise!
+
+**Team Structure:**
+- **Leader Bot** - Creates/prioritizes issues, coordinates team, monitors velocity
+- **Tove** - Developer (multi-agent roles)
+- **Gaute** - Developer (multi-agent roles)
+- **Brian Edwards** - Human (for credentials and critical decisions only)
+
+**Communication Frequency:**
+- Check Slack every 15-25 minutes
+- Post updates when completing significant work
+- Don't wait for assignments - self-assign based on priority
+- Everyone can create issues, but Leader Bot maintains the backlog
+
+### Slack Integration
+Use the Slack Web API directly (tokens in `.secrets.txt`):
+- Post progress updates to #dev-team
+- Post CI status to #ci-status (major events only)
+- Use @mentions to tag team members
+- Tools available: `tools/slack/slack-client.ts`
+
+### GitHub Integration
+Use REST API directly (no `gh` CLI - GraphQL rate-limited):
+- Self-assign issues from backlog
+- Create feature branch: `git checkout -b feature/issue-N-description`
+- Push commits with clear messages
+- Self-review PRs (don't wait for humans!)
+- Merge when checks pass (you are your own reviewer)
+- Post completion updates to Slack
+
+### Workflow Pattern
+1. **Pick Issue**: Browse GitHub, self-assign high-priority issue
+2. **Notify Team**: Post to #dev-team what you're working on
+3. **Implement**: Code + tests (90%+ coverage) + docs
+4. **Self-Review**: Thoroughly review your own PR
+5. **Merge**: When checks pass, merge to main
+6. **Update**: Post completion to #dev-team with stats
+7. **Repeat**: Pick next issue immediately
+
+### Status Update Format
+Post to #dev-team when completing work:
+```
+🚀 [Your Name] - Issue #N Complete
+
+What I Built:
+✅ Feature description
+✅ Test coverage: X tests
+✅ Files changed: N files, +X lines
+
+Commit: abc1234
+Next: Issue #M or ask for assignment
+```
 
 ### Ask for Secrets
-When you need authentication or secrets, request them directly:
+When you need authentication or secrets, request them directly from Brian:
 - GitHub tokens
-- API keys
+- API keys  
 - Cloud credentials
 - Database passwords
 
 **Format**: Clear, upfront request with explanation of what's needed and why.
 
-### Status Updates
-Keep updates concise:
-- What you're working on
-- Blockers (if any)
-- What you need from humans
+### Team Velocity
+You are WAY FASTER than you think:
+- Don't pick only small issues
+- Embrace large, complex work
+- Ship daily (multiple times per day)
+- Fix what's broken immediately
+- Refactor fearlessly
 
 ---
 
 ## Current Status
 
-**Phase**: Initial setup and architecture
-**Next Steps**: See AGENTS.md for agent coordination
+**Phase**: Active development - shipping code daily!
+
+**Completed:**
+- ✅ Foundation documentation (CLAUDE.md, AGENTS.md)
+- ✅ Modern testing stack (Vitest, Playwright, ESLint 9, Prettier 3.7)
+- ✅ Slack workspace configured (#dev-team, #ci-status)
+- ✅ GitHub integration (934 issues created, labels, workflows)
+- ✅ SkyAuth core system (registration, JWT, API keys, RBAC)
+- ✅ Shared types package
+- ✅ Slack integration tools
+
+**In Progress:**
+- SkyAuth OAuth providers (Google, GitHub)
+- Database schema and migrations
+- Docker development environment
+- GitHub Actions CI/CD pipeline
+
+**Team Velocity:** 🔥🔥🔥
+- 3,514 lines shipped (day 1)
+- 3 critical issues closed
+- 32 tests written
+- 100% TypeScript, strict mode, strong typing
+
+**Next Steps**: See AGENTS.md for agent coordination and issue priorities
 
 ---
 

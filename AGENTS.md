@@ -195,37 +195,37 @@
 
 ## Communication Protocols
 
-### Slack Channels
+### Slack Workspace: opensky-suite.slack.com
 
-#### #general
-- General announcements
-- Cross-team coordination
-- Daily standups (async)
+**Active Channels:**
 
-#### #architecture
-- Architecture decisions
-- Design discussions
-- Technology evaluations
+#### #dev-team (PRIMARY)
+- **Purpose**: Main coordination channel for Tove, Gaute, Leader Bot
+- **Frequency**: Check every 15-25 minutes
+- **Content**: 
+  - Async standups (post progress, next tasks, blockers)
+  - Feature coordination to avoid conflicts
+  - Quick questions and discussions
+  - Celebration of shipped features
+  - Issue assignments and priorities
+- **Format**: Concise, actionable updates
+- **Noise Level**: High (active development chatter)
 
-#### #product-*
-- One channel per product (e.g., #product-skymail)
-- Feature discussions
-- Product-specific decisions
+#### #ci-status
+- **Purpose**: GitHub Actions and build notifications
+- **Frequency**: Automated posts on major events
+- **Content**:
+  - ✅ Build successes (commits to main)
+  - ❌ Build failures (urgent attention needed)
+  - 🚀 Deployment notifications
+  - 📦 Major milestones
+- **Format**: Structured, automated messages
+- **Noise Level**: Low (major events only, not every commit)
 
-#### #infra
-- Infrastructure changes
-- Deployment notifications
-- Incident response
-
-#### #qa
-- Test results
-- Bug reports
-- Performance metrics
-
-#### #github
-- PR notifications
-- Issue assignments
-- Review requests
+**Archived Channels:**
+- #new-channel (archived, replaced by #dev-team)
+- #all-opensky-suite (archived, not needed)
+- #social (archived, focused on work only)
 
 ### Decision Making Process
 
@@ -237,20 +237,43 @@
 
 ### Status Updates
 
-**Format** (posted to relevant channel):
+**Format** (posted to #dev-team):
 ```
-Agent: [Agent Name]
-Working On: [Current task/issue]
-Progress: [Brief status]
+🚀 [Agent Name] - [Status/Milestone]
+
+What I Accomplished:
+✅ [Completed task 1]
+✅ [Completed task 2]
+✅ Stats: N files, +X lines, Y tests
+
+Commit: [sha]
+Issues Closed: #N, #M
+
+Next: [Next task or "Ready for assignment"]
 Blockers: [Any blockers, or "None"]
-Next: [Next planned task]
+```
+
+**Example:**
+```
+🚀 Tove - SkyAuth Core Complete!
+
+What I Accomplished:
+✅ User registration with email verification (#21)
+✅ JWT authentication with refresh tokens (#22)
+✅ API key auth for LLM integration (#28)
+✅ 32 tests, 24 files, +3,514 lines
+
+Commit: a8040b4
+Next: OAuth providers or database schema?
+Blockers: None
 ```
 
 **Frequency**: 
-- End of significant work unit
-- Before switching to new task
-- When blocked
-- Minimum once per day
+- After completing major work (issue, feature, milestone)
+- Every 15-25 minutes if making progress
+- When asking for next assignment
+- When blocked (immediately!)
+- When switching focus areas
 
 ---
 
@@ -271,13 +294,24 @@ Next: [Next planned task]
 
 ### Pull Request Process
 
-1. **Create PR**: Agent creates PR with descriptive title and body
-2. **Self-Review**: Agent reviews own code thoroughly
-3. **Screenshot Check**: Agent verifies all screenshot changes
-4. **CI Checks**: Monitor PR checks (3-minute target)
-5. **Cross-Review**: Optional - other agents can review if interested
-6. **Merge**: Agent merges own PR after checks pass
-7. **Notification**: Post to #github channel
+**You are your own reviewer!** No need to wait for others.
+
+1. **Create Feature Branch**: `git checkout -b feature/issue-N-description`
+2. **Implement**: Write code + tests (90%+ coverage) + documentation
+3. **Local Testing**: Run `npm test` and `npm run typecheck`
+4. **Commit to Main**: Push directly to main (fast-moving team, small group)
+   - OR create PR if you want CI verification first
+5. **Self-Review**: Review your own code thoroughly
+   - Check test coverage
+   - Verify TypeScript types
+   - Run screenshot tests if UI changed
+6. **CI Checks**: Monitor checks (3-minute target)
+7. **Merge**: Merge your own PR when checks pass
+8. **Slack Update**: Post completion to #dev-team
+9. **CI Notification**: Automated post to #ci-status
+
+**Note**: With a small, fast-moving team (3 agents), we push directly to main. 
+No PR approval needed. You are responsible for your code quality.
 
 ### Branch Strategy
 
@@ -427,9 +461,40 @@ Context: [Link to issue/PR/doc]
 
 ## Current Team Status
 
-**Active Agents**: TBD  
-**Phase**: Initial setup and architecture  
+**Active Agents**: 3 (Leader Bot, Tove, Gaute) + Brian (human, credentials only)
+
+**Phase**: Active Development - Shipping Daily!
+
+**Completed Milestones:**
+- ✅ Foundation setup (docs, tooling, testing stack)
+- ✅ Slack workspace configured
+- ✅ 934 GitHub issues created and prioritized
+- ✅ SkyAuth core system (3,514 lines, 32 tests)
+  - User registration + email verification
+  - JWT authentication (access + refresh tokens)
+  - API key system for LLM integration
+  - Password reset flow
+  - RBAC and permission inheritance
+
+**Current Sprint:**
+- SkyAuth: OAuth providers, 2FA, SSO
+- Infrastructure: Docker, CI/CD, database migrations
+- Testing: Complete test coverage, fix instanceof checks
+
 **Next Milestone**: MVP of core products (SkyAuth, SkyMail, SkyDrive, SkyDocs)
+
+**Team Velocity**: 🔥🔥🔥
+- Issues closed: 3 critical (day 1)
+- Code shipped: 3,514 lines
+- Test coverage: Comprehensive (32 tests)
+- Commits: Multiple per day per agent
+
+**Working Style:**
+- Fast-paced, high output
+- Self-assign issues based on priority
+- Ship multiple times per day
+- Coordinate via Slack every 15-25 min
+- No bottlenecks, no waiting for approvals
 
 ---
 
