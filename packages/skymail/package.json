@@ -1,0 +1,32 @@
+{
+  "name": "@opensky/skymail",
+  "version": "0.1.0",
+  "description": "OpenSky Suite - Email system (Gmail-inspired)",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "build": "tsc",
+    "test": "vitest",
+    "test:coverage": "vitest --coverage"
+  },
+  "keywords": [
+    "email",
+    "smtp",
+    "imap",
+    "mail"
+  ],
+  "author": "OpenSky Suite",
+  "license": "MIT",
+  "dependencies": {
+    "nodemailer": "^6.9.8",
+    "mailparser": "^3.6.9",
+    "smtp-server": "^3.13.4",
+    "imap": "^0.8.19"
+  },
+  "devDependencies": {
+    "@types/node": "^20.10.6",
+    "@types/nodemailer": "^6.4.14",
+    "typescript": "^5.3.3",
+    "vitest": "^1.1.0"
+  }
+}
