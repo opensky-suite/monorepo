@@ -14,3 +14,4 @@ export * from "./storage.js";
 export { FileService } from "./file-service.js";
 export { FolderService } from "./folder-service.js";
 export { TrashService } from "./trash-service.js";
+export { VersionService } from "./version-service.js";
