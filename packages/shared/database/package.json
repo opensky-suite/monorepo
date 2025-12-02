@@ -1,0 +1,46 @@
+{
+  "name": "@opensky/database",
+  "version": "0.1.0",
+  "type": "module",
+  "description": "Shared database utilities for OpenSky Suite (PostgreSQL)",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "import": "./dist/index.js",
+      "types": "./dist/index.d.ts"
+    },
+    "./pool": {
+      "import": "./dist/pool/index.js",
+      "types": "./dist/pool/index.d.ts"
+    },
+    "./transaction": {
+      "import": "./dist/transaction/index.js",
+      "types": "./dist/transaction/index.d.ts"
+    },
+    "./repository": {
+      "import": "./dist/repository/index.js",
+      "types": "./dist/repository/index.d.ts"
+    },
+    "./query": {
+      "import": "./dist/query/index.js",
+      "types": "./dist/query/index.d.ts"
+    }
+  },
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsc --watch",
+    "test": "vitest run",
+    "test:watch": "vitest"
+  },
+  "dependencies": {
+    "@opensky/types": "0.1.0",
+    "pg": "^8.13.1"
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.1",
+    "@types/pg": "^8.11.10",
+    "typescript": "^5.7.2",
+    "vitest": "^2.1.8"
+  }
+}
