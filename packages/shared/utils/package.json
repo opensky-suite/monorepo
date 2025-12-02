@@ -1,0 +1,56 @@
+{
+  "name": "@opensky/utils",
+  "version": "0.1.0",
+  "type": "module",
+  "description": "Shared utilities for OpenSky Suite",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "import": "./dist/index.js",
+      "types": "./dist/index.d.ts"
+    },
+    "./validation": {
+      "import": "./dist/validation/index.js",
+      "types": "./dist/validation/index.d.ts"
+    },
+    "./errors": {
+      "import": "./dist/errors/index.js",
+      "types": "./dist/errors/index.d.ts"
+    },
+    "./logging": {
+      "import": "./dist/logging/index.js",
+      "types": "./dist/logging/index.d.ts"
+    },
+    "./dates": {
+      "import": "./dist/dates/index.js",
+      "types": "./dist/dates/index.d.ts"
+    },
+    "./api": {
+      "import": "./dist/api/index.js",
+      "types": "./dist/api/index.d.ts"
+    },
+    "./crypto": {
+      "import": "./dist/crypto/index.js",
+      "types": "./dist/crypto/index.d.ts"
+    }
+  },
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsc --watch",
+    "test": "vitest run",
+    "test:watch": "vitest"
+  },
+  "dependencies": {
+    "@opensky/types": "0.1.0",
+    "zod": "^3.24.1",
+    "date-fns": "^4.1.0",
+    "pino": "^9.5.0",
+    "pino-pretty": "^13.0.0"
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.1",
+    "typescript": "^5.7.2",
+    "vitest": "^2.1.8"
+  }
+}
