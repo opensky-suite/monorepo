@@ -1,0 +1,41 @@
+{
+  "name": "@opensky/permissions",
+  "version": "0.1.0",
+  "type": "module",
+  "description": "Unified permissions system for OpenSky Suite",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "import": "./dist/index.js",
+      "types": "./dist/index.d.ts"
+    },
+    "./rbac": {
+      "import": "./dist/rbac/index.js",
+      "types": "./dist/rbac/index.d.ts"
+    },
+    "./inheritance": {
+      "import": "./dist/inheritance/index.js",
+      "types": "./dist/inheritance/index.d.ts"
+    },
+    "./middleware": {
+      "import": "./dist/middleware/index.js",
+      "types": "./dist/middleware/index.d.ts"
+    }
+  },
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsc --watch",
+    "test": "vitest run",
+    "test:watch": "vitest"
+  },
+  "dependencies": {
+    "@opensky/types": "0.1.0",
+    "@opensky/utils": "0.1.0"
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.1",
+    "typescript": "^5.7.2",
+    "vitest": "^2.1.8"
+  }
+}
