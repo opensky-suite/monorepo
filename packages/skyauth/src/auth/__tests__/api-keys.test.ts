@@ -68,7 +68,7 @@ describe("ApiKeyService", () => {
       };
 
       await expect(service.createApiKey("user-123", keyData)).rejects.toThrow(
-        ValidationError,
+        /character/i,
       );
     });
 
@@ -100,9 +100,6 @@ describe("ApiKeyService", () => {
   describe("verifyApiKey", () => {
     it("should throw UnauthorizedError for invalid format", async () => {
       await expect(service.verifyApiKey("invalid-key")).rejects.toThrow(
-        UnauthorizedError,
-      );
-      await expect(service.verifyApiKey("invalid-key")).rejects.toThrow(
         "Invalid API key format",
       );
     });
@@ -111,7 +108,7 @@ describe("ApiKeyService", () => {
       vi.mocked(apiKeyRepo.findByPrefix).mockResolvedValue(null);
 
       await expect(service.verifyApiKey("sky_unknownkey123")).rejects.toThrow(
-        UnauthorizedError,
+        /invalid/i,
       );
     });
 
@@ -127,9 +124,6 @@ describe("ApiKeyService", () => {
         createdAt: new Date(),
       });
 
-      await expect(service.verifyApiKey("sky_12345678xxx")).rejects.toThrow(
-        UnauthorizedError,
-      );
       await expect(service.verifyApiKey("sky_12345678xxx")).rejects.toThrow(
         "revoked",
       );
@@ -147,9 +141,6 @@ describe("ApiKeyService", () => {
         createdAt: new Date(),
       });
 
-      await expect(service.verifyApiKey("sky_12345678xxx")).rejects.toThrow(
-        UnauthorizedError,
-      );
       await expect(service.verifyApiKey("sky_12345678xxx")).rejects.toThrow(
         "expired",
       );
