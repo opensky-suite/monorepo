@@ -1,0 +1,31 @@
+{
+  "name": "@opensky/skydocs",
+  "version": "0.1.0",
+  "description": "OpenSky Suite - Collaborative document editing (Google Docs alternative)",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "build": "tsc",
+    "test": "vitest",
+    "test:coverage": "vitest --coverage"
+  },
+  "keywords": [
+    "documents",
+    "editor",
+    "collaboration",
+    "rich-text",
+    "crdt"
+  ],
+  "author": "OpenSky Suite",
+  "license": "MIT",
+  "dependencies": {
+    "pg": "^8.11.3",
+    "nanoid": "^5.0.4"
+  },
+  "devDependencies": {
+    "@types/node": "^20.10.6",
+    "@types/pg": "^8.10.9",
+    "typescript": "^5.3.3",
+    "vitest": "^1.1.0"
+  }
+}
