@@ -94,6 +94,27 @@ services:
       timeout: 5s
       retries: 3
 
+  # Coturn (TURN/STUN server) for WebRTC (SkyMeet)
+  coturn:
+    image: coturn/coturn:latest
+    container_name: opensky-coturn
+    network_mode: host
+    environment:
+      - DETECT_EXTERNAL_IP=yes
+      - DETECT_RELAY_IP=yes
+    command:
+      - -n
+      - --log-file=stdout
+      - --min-port=49152
+      - --max-port=65535
+      - --realm=opensky.local
+      - --user=opensky:dev_turn_password
+      - --lt-cred-mech
+      - --fingerprint
+      - --no-multicast-peers
+      - --no-cli
+    restart: unless-stopped
+
 volumes:
   postgres_data:
   redis_data:
