@@ -1,0 +1,73 @@
+#!/usr/bin/env sh
+. "$(dirname -- "$0")/_/husky.sh"
+
+# Pre-push hook - runs before pushing to remote
+# More thorough checks than pre-commit (can take longer)
+
+echo "🚀 Running pre-push checks..."
+
+# 1. Run tests on changed files
+echo "  🧪 Running affected tests..."
+changed_files=$(git diff --name-only @{u}.. 2>/dev/null || git diff --name-only HEAD~1)
+if echo "$changed_files" | grep -E '\.(ts|tsx|js|jsx)$' > /dev/null; then
+  if ! npm test -- --run --reporter=verbose 2>&1 | tail -20; then
+    echo "  ❌ BLOCKED: Tests failed!"
+    echo "     Fix failing tests before pushing."
+    echo "     Run: npm test"
+    exit 1
+  fi
+fi
+
+# 2. Type check
+echo "  📘 Running TypeScript type check..."
+if ! npm run typecheck; then
+  echo "  ❌ BLOCKED: TypeScript errors detected!"
+  echo "     Fix type errors before pushing."
+  exit 1
+fi
+
+# 3. Lint check
+echo "  ⚡ Running linter..."
+if ! npm run lint; then
+  echo "  ❌ BLOCKED: Linting errors detected!"
+  echo "     Run: npm run lint --fix"
+  exit 1
+fi
+
+# 4. Check for untracked files that should be committed
+echo "  📂 Checking for untracked files..."
+untracked=$(git ls-files --others --exclude-standard)
+if [ -n "$untracked" ]; then
+  echo "  ⚠️  WARNING: Untracked files detected:"
+  echo "$untracked" | head -5
+  echo "     Consider adding to .gitignore or committing them."
+  # Don't block, just warn
+fi
+
+# 5. Check branch name
+echo "  🌿 Validating branch name..."
+branch_name=$(git symbolic-ref --short HEAD)
+if ! echo "$branch_name" | grep -qE '^(feature|fix|refactor|docs|test|chore)/'; then
+  if [ "$branch_name" != "main" ]; then
+    echo "  ⚠️  WARNING: Branch name doesn't follow convention."
+    echo "     Recommended: feature/issue-N-description, fix/issue-N-description"
+    echo "     Current: $branch_name"
+    # Don't block, just warn
+  fi
+fi
+
+# 6. Prevent pushing to main
+if [ "$branch_name" = "main" ]; then
+  echo "  ❌ BLOCKED: Direct push to main is not allowed!"
+  echo "     Main branch is protected. Use pull requests."
+  echo ""
+  echo "     Workflow:"
+  echo "       1. Create feature branch: git checkout -b feature/issue-N-description"
+  echo "       2. Make changes and commit"
+  echo "       3. Push feature branch: git push -u origin feature/issue-N-description"
+  echo "       4. Create PR via GitHub API"
+  echo ""
+  exit 1
+fi
+
+echo "✅ Pre-push checks passed!"

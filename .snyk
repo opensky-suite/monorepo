@@ -1,0 +1,24 @@
+# Snyk (https://snyk.io) policy file
+version: v1.25.0
+
+# Ignore specific vulnerabilities (with expiration)
+ignore: {}
+
+# Language settings
+language-settings:
+  javascript:
+    ignore-scripts: false
+
+# Exclude paths from scanning
+exclude:
+  global:
+    - node_modules/**
+    - dist/**
+    - build/**
+    - coverage/**
+    - tests/**
+    - "**/*.test.ts"
+    - "**/*.spec.ts"
+
+# Fail on
+failThreshold: high

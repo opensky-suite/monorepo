@@ -1,0 +1,32 @@
+# Codecov configuration
+# https://docs.codecov.com/docs/codecov-yaml
+
+coverage:
+  status:
+    project:
+      default:
+        target: 90%
+        threshold: 1%
+        base: auto
+    patch:
+      default:
+        target: 90%
+        threshold: 5%
+
+comment:
+  layout: "reach,diff,flags,tree,footer"
+  behavior: default
+  require_changes: false
+  require_base: false
+  require_head: true
+
+ignore:
+  - "**/*.test.ts"
+  - "**/*.spec.ts"
+  - "**/tests/**"
+  - "tools/**"
+  - "**/__tests__/**"
+  - "**/node_modules/**"
+  - "**/*.d.ts"
+  - "dist/**"
+  - "build/**"

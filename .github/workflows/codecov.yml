@@ -1,0 +1,86 @@
+name: Code Coverage
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  coverage:
+    name: Upload Coverage to Codecov
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run tests with coverage
+        run: npm run test:coverage
+
+      - name: Upload coverage to Codecov
+        uses: codecov/codecov-action@v4
+        with:
+          files: ./coverage/coverage-final.json,./coverage/lcov.info
+          flags: unittests
+          name: opensky-suite
+          fail_ci_if_error: false
+          verbose: true
+        env:
+          CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
+
+      - name: Check coverage threshold
+        run: |
+          # Extract coverage percentage
+          coverage=$(cat coverage/coverage-summary.json | python3 -c "import sys, json; data=json.load(sys.stdin); print(data['total']['lines']['pct'])")
+          echo "Coverage: $coverage%"
+          
+          # Fail if below 90%
+          if (( $(echo "$coverage < 90" | bc -l) )); then
+            echo "❌ Coverage below 90% threshold: $coverage%"
+            exit 1
+          fi
+          
+          echo "✅ Coverage meets 90% threshold: $coverage%"
+
+      - name: Comment coverage on PR
+        if: github.event_name == 'pull_request'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            const coverage = JSON.parse(fs.readFileSync('coverage/coverage-summary.json', 'utf8'));
+            const pct = coverage.total.lines.pct;
+            
+            const body = `## 📊 Code Coverage Report
+            
+            **Total Coverage:** ${pct}% ${pct >= 90 ? '✅' : '⚠️'}
+            
+            | Metric | Coverage |
+            |--------|----------|
+            | Lines | ${coverage.total.lines.pct}% (${coverage.total.lines.covered}/${coverage.total.lines.total}) |
+            | Statements | ${coverage.total.statements.pct}% |
+            | Functions | ${coverage.total.functions.pct}% |
+            | Branches | ${coverage.total.branches.pct}% |
+            
+            ${pct < 90 ? '⚠️ **Coverage below 90% threshold!**' : '✅ **Coverage meets 90% threshold**'}
+            
+            [View detailed report on Codecov](https://codecov.io/gh/opensky-suite/monorepo)
+            `;
+            
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: body
+            });
