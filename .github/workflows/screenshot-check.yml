@@ -1,0 +1,100 @@
+name: Screenshot Regression Check
+
+on:
+  pull_request:
+    branches: [main]
+
+jobs:
+  screenshot-test:
+    name: Visual Regression Testing
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Install Playwright browsers
+        run: npx playwright install --with-deps chromium
+
+      - name: Start development server
+        run: |
+          npm run dev &
+          npx wait-on http://localhost:3000 -t 60000
+
+      - name: Run screenshot tests
+        run: npm run test:screenshots
+        continue-on-error: true
+
+      - name: Upload screenshot diff report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: screenshot-report
+          path: |
+            tests/screenshots/reports/
+            tests/screenshots/diff/
+          retention-days: 30
+
+      - name: Comment on PR with results
+        if: always()
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            const resultsPath = 'tests/screenshots/diff/results.json';
+            
+            if (fs.existsSync(resultsPath)) {
+              const results = JSON.parse(fs.readFileSync(resultsPath, 'utf8'));
+              
+              const body = `## 📸 Screenshot Test Results
+              
+              **Summary:**
+              - ✅ Captured: ${results.captured} pages
+              - ⚠️  Changed: ${results.changed} pages
+              - ❌ Failed: ${results.failed} pages
+              
+              ${results.changed > 0 ? `**Changed Pages:**\n${results.pages.filter((p, i) => i < results.changed).map(p => `- ${p}`).join('\n')}` : ''}
+              
+              ${results.changed > 0 ? '⚠️ **Action Required:** Visual changes detected. Please review screenshots in the artifact.' : '✅ **All screenshots match baseline**'}
+              
+              [Download Screenshot Report](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }})
+              `;
+              
+              github.rest.issues.createComment({
+                issue_number: context.issue.number,
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                body: body
+              });
+            }
+
+      - name: Notify Slack on changes
+        if: failure()
+        uses: slackapi/slack-github-action@v1.26.0
+        with:
+          channel-id: 'C0A0TNBHCDQ'
+          payload: |
+            {
+              "text": "⚠️ Screenshot Changes Detected",
+              "blocks": [
+                {
+                  "type": "section",
+                  "text": {
+                    "type": "mrkdwn",
+                    "text": "*⚠️ Screenshot Changes Detected*\n\n*PR:* ${{ github.event.pull_request.title }}\n*Author:* ${{ github.event.pull_request.user.login }}\n\n<${{ github.event.pull_request.html_url }}|View PR>"
+                  }
+                }
+              ]
+            }
+        env:
+          SLACK_BOT_TOKEN: ${{ secrets.SLACK_BOT_TOKEN }}

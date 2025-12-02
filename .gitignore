@@ -70,10 +70,6 @@ web_modules/
 .env.*
 !.env.example
 
-# Secrets file (tooling, GitHub Actions, deployment secrets)
-.secrets.txt
-.secrets
-
 # parcel-bundler cache (https://parceljs.org/)
 .cache
 .parcel-cache
@@ -141,3 +137,20 @@ dist
 # Vite logs files
 vite.config.js.timestamp-*
 vite.config.ts.timestamp-*
+
+# Secrets file (tooling, GitHub Actions, deployment secrets)
+.secrets.txt
+.secrets
+
+# Playwright
+test-results/
+playwright-report/
+playwright/.cache/
+
+# Screenshots - DO NOT commit local test screenshots
+tests/screenshots/current/
+tests/screenshots/diff/
+tests/screenshots/reports/
+
+# BUT DO commit baseline screenshots
+!tests/screenshots/baseline/
