@@ -42,7 +42,7 @@ async function main() {
 **Next:** Email threading (#47) or IMAP server (#45)?
 **Blockers:** None`;
 
-  await slack.postMessage(devTeamChannel.id, message);
+  await slack.postMessage(devTeamChannel.id!, message);
   console.log("✅ Posted to #dev-team!");
 }
 

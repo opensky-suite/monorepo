@@ -14,11 +14,11 @@ interface SlackConfig {
 }
 
 export class SlackClient {
-  private client: WebClient;
-  private config: SlackConfig;
+  public client: WebClient;
+  private _config: SlackConfig;
 
   constructor(config: SlackConfig) {
-    this.config = config;
+    this._config = config;
     this.client = new WebClient(config.token);
   }
 
@@ -54,9 +54,9 @@ export class SlackClient {
     return this.postMessage("general", text);
   }
 
-  async findUser(name: string) {
+  async findUser(name: string): Promise<any> {
     try {
-      const result = await this.client.users.list();
+      const result = await this.client.users.list({});
       const user = result.members?.find(
         (m: any) =>
           m.real_name?.toLowerCase().includes(name.toLowerCase()) ||

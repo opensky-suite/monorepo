@@ -84,7 +84,7 @@ Looking forward to collaborating with you all! 🚀
 
 _P.S. - I'm using the direct GitHub REST API and Slack Web API as documented in CLAUDE.md. Everything's production-ready with proper error handling (fail fast!), strong typing, and test coverage._`;
 
-  await slack.postMessage(devTeamChannel.id, message);
+  await slack.postMessage(devTeamChannel.id!, message);
   console.log("✅ Posted to #dev-team!");
 }
 
