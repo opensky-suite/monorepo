@@ -7,10 +7,11 @@ on:
     branches: [main]
 
 jobs:
-  test:
-    name: Test & Build
+  # Parallel job 1: Linting
+  lint:
+    name: Lint
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    timeout-minutes: 3
 
     steps:
       - name: Checkout code
@@ -25,20 +26,184 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Lint
+      - name: Run ESLint
         run: npm run lint
 
-      - name: Type check
+      - name: Check formatting
+        run: npx prettier --check "**/*.{ts,tsx,js,jsx,json,md}"
+
+  # Parallel job 2: Type checking
+  typecheck:
+    name: Type Check
+    runs-on: ubuntu-latest
+    timeout-minutes: 3
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run TypeScript type check
         run: npm run typecheck
 
-      - name: Run tests
-        run: npm test
+  # Parallel job 3: Unit tests with coverage
+  test:
+    name: Unit Tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
 
-      - name: Check test coverage
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run unit tests with coverage
         run: npm run test:coverage
 
+      - name: Upload coverage reports
+        if: always()
+        uses: codecov/codecov-action@v5
+        with:
+          files: ./coverage/coverage-final.json
+          fail_ci_if_error: false
+
+  # Parallel job 4: E2E tests (critical paths)
+  e2e:
+    name: E2E Tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Install Playwright browsers
+        run: npx playwright install --with-deps chromium
+
+      - name: Run E2E tests
+        run: npm run test:e2e
+
+      - name: Upload E2E artifacts
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: e2e-failures
+          path: |
+            test-results/
+            playwright-report/
+          retention-days: 7
+
+  # Parallel job 5: Security scanning
+  security:
+    name: Security Scan
+    runs-on: ubuntu-latest
+    timeout-minutes: 3
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run npm audit
+        run: npm audit --audit-level=high
+        continue-on-error: true
+
+      - name: Check for secrets
+        uses: trufflesecurity/trufflehog@main
+        with:
+          path: ./
+          base: ${{ github.event.repository.default_branch }}
+          head: HEAD
+          extra_args: --only-verified
+
+  # Build verification (runs after all checks pass)
+  build:
+    name: Build Verification
+    runs-on: ubuntu-latest
+    needs: [lint, typecheck, test, e2e, security]
+    timeout-minutes: 5
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run build
+        run: npm run build
+
+  # Deploy check with Docker validation
+  deploy-check:
+    name: Docker Deploy Check
+    runs-on: ubuntu-latest
+    needs: [build]
+    if: github.ref == 'refs/heads/main'
+    timeout-minutes: 3
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Verify docker-compose configuration
+        run: |
+          if [ -f docker-compose.yml ]; then
+            docker-compose config
+            echo "✅ Docker compose configuration valid"
+          else
+            echo "⏭️  docker-compose.yml not yet created"
+          fi
+
+  # Slack notifications (runs last, after all jobs)
+  notify:
+    name: Slack Notification
+    runs-on: ubuntu-latest
+    needs: [lint, typecheck, test, e2e, security, build, deploy-check]
+    if: always() && github.ref == 'refs/heads/main'
+    timeout-minutes: 2
+
+    steps:
       - name: Notify Slack on Success
-        if: success() && github.ref == 'refs/heads/main'
+        if: ${{ needs.build.result == 'success' }}
         uses: slackapi/slack-github-action@v1.26.0
         with:
           channel-id: 'C0A0TNBHCDQ'
@@ -50,7 +215,7 @@ jobs:
                   "type": "section",
                   "text": {
                     "type": "mrkdwn",
-                    "text": "*✅ Build Success*\n\n*Commit:* `${{ github.sha }}`\n*Author:* ${{ github.actor }}\n*Branch:* ${{ github.ref_name }}\n*Message:* ${{ github.event.head_commit.message }}\n\n<${{ github.event.head_commit.url }}|View Commit>"
+                    "text": "*✅ Build Success*\n\n*Commit:* `${{ github.sha }}`\n*Author:* ${{ github.actor }}\n*Branch:* ${{ github.ref_name }}\n*Message:* ${{ github.event.head_commit.message }}\n*Duration:* ~2-3 minutes\n\n<${{ github.event.head_commit.url }}|View Commit>"
                   }
                 }
               ]
@@ -59,7 +224,7 @@ jobs:
           SLACK_BOT_TOKEN: ${{ secrets.SLACK_BOT_TOKEN }}
 
       - name: Notify Slack on Failure
-        if: failure() && github.ref == 'refs/heads/main'
+        if: ${{ needs.build.result == 'failure' || needs.test.result == 'failure' || needs.lint.result == 'failure' || needs.typecheck.result == 'failure' }}
         uses: slackapi/slack-github-action@v1.26.0
         with:
           channel-id: 'C0A0TNBHCDQ'
@@ -71,48 +236,7 @@ jobs:
                   "type": "section",
                   "text": {
                     "type": "mrkdwn",
-                    "text": "*❌ Build Failed*\n\n*Commit:* `${{ github.sha }}`\n*Author:* ${{ github.actor }}\n*Branch:* ${{ github.ref_name }}\n*Job:* ${{ github.job }}\n\n<${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}|View Logs>"
-                  }
-                }
-              ]
-            }
-        env:
-          SLACK_BOT_TOKEN: ${{ secrets.SLACK_BOT_TOKEN }}
-
-  deploy-check:
-    name: Docker Deploy Check
-    runs-on: ubuntu-latest
-    needs: test
-    if: github.ref == 'refs/heads/main'
-    timeout-minutes: 5
-
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Verify docker-compose (when created)
-        run: |
-          if [ -f docker-compose.yml ]; then
-            docker-compose config
-            echo "✅ Docker compose configuration valid"
-          else
-            echo "⏭️  docker-compose.yml not yet created"
-          fi
-
-      - name: Notify Slack on Deploy Check Success
-        if: success()
-        uses: slackapi/slack-github-action@v1.26.0
-        with:
-          channel-id: 'C0A0TNBHCDQ'
-          payload: |
-            {
-              "text": "🚀 Deploy Check Complete",
-              "blocks": [
-                {
-                  "type": "section",
-                  "text": {
-                    "type": "mrkdwn",
-                    "text": "*🚀 Deploy Check Complete*\n\n*Status:* Ready for deployment\n*Commit:* `${{ github.sha }}`"
+                    "text": "*❌ Build Failed*\n\n*Commit:* `${{ github.sha }}`\n*Author:* ${{ github.actor }}\n*Branch:* ${{ github.ref_name }}\n*Failed Jobs:* Lint: ${{ needs.lint.result }}, Type: ${{ needs.typecheck.result }}, Test: ${{ needs.test.result }}, E2E: ${{ needs.e2e.result }}, Security: ${{ needs.security.result }}, Build: ${{ needs.build.result }}\n\n<${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}|View Logs>"
                   }
                 }
               ]
