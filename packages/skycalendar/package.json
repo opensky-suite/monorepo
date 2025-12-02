@@ -1,0 +1,33 @@
+{
+  "name": "@opensky/skycalendar",
+  "version": "0.1.0",
+  "description": "OpenSky Suite - Calendar system with recurring events and time zones",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "build": "tsc",
+    "test": "vitest",
+    "test:coverage": "vitest --coverage"
+  },
+  "keywords": [
+    "calendar",
+    "events",
+    "scheduling",
+    "recurring",
+    "rrule"
+  ],
+  "author": "OpenSky Suite",
+  "license": "MIT",
+  "dependencies": {
+    "rrule": "^2.8.1",
+    "luxon": "^3.4.4",
+    "pg": "^8.11.3"
+  },
+  "devDependencies": {
+    "@types/luxon": "^3.4.0",
+    "@types/node": "^20.10.6",
+    "@types/pg": "^8.10.9",
+    "typescript": "^5.3.3",
+    "vitest": "^1.1.0"
+  }
+}
