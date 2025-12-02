@@ -13,3 +13,4 @@ export * from "./types.js";
 export * from "./storage.js";
 export { FileService } from "./file-service.js";
 export { FolderService } from "./folder-service.js";
+export { TrashService } from "./trash-service.js";
